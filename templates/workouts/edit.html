@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ workout.Workout_Name }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-pencil-square text-danger me-2"></i>Edit Workout Routine</h2>
+        <span class="text-muted small">Update routine details for {{ workout.Workout_Name }} (ID: #{{ workout.Workout_ID }})</span>
+    </div>
+    <a href="{{ url_for('workouts.show', id=workout.Workout_ID) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-danger">Edit Workout #{{ workout.Workout_ID }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('workouts.edit', id=workout.Workout_ID) }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Workout Routine Name <span class="text-danger">*</span></label>
+                            <input type="text" name="workout_name" class="form-control" value="{{ workout.Workout_Name }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Difficulty Level <span class="text-danger">*</span></label>
+                            <select name="difficulty_level" class="form-select" required>
+                                <option value="Easy" {% if workout.Difficulty_Level == 'Easy' %}selected{% endif %}>Easy</option>
+                                <option value="Medium" {% if workout.Difficulty_Level == 'Medium' %}selected{% endif %}>Medium</option>
+                                <option value="Hard" {% if workout.Difficulty_Level == 'Hard' %}selected{% endif %}>Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Estimated Calories Burn (kcal)</label>
+                            <input type="number" name="calories_burn" class="form-control" min="0" value="{{ workout.Calories_Burn }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input type="number" name="duration_minutes" class="form-control" min="5" max="300" value="{{ workout.Duration_Minutes }}" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Assigned Trainer</label>
+                            <select name="trainer_id" class="form-select">
+                                <option value="">-- No Trainer Assigned --</option>
+                                {% for t in trainers %}
+                                <option value="{{ t.Trainer_ID }}" {% if workout.Trainer_ID == t.Trainer_ID %}selected{% endif %}>
+                                    {{ t.Name }} ({{ t.Specialization }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Routine Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ workout.Description or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('workouts.show', id=workout.Workout_ID) }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-check-circle me-1"></i> Update Workout
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

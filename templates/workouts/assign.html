@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Workout - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-person-check-fill text-primary me-2"></i>Assign Workout Routine</h2>
+        <span class="text-muted small">Enroll members into gym workout programs and fitness training routines</span>
+    </div>
+    <a href="{{ url_for('workouts.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Workouts
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Assignment Form Card -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-primary">Assign Member to Workout</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('workouts.assign') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Member <span class="text-danger">*</span></label>
+                        <select name="member_id" class="form-select" required>
+                            <option value="">-- Choose Member --</option>
+                            {% for m in members %}
+                            <option value="{{ m.Member_ID }}">#{{ m.Member_ID }} - {{ m.Name }} ({{ m.Phone }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Workout Routine <span class="text-danger">*</span></label>
+                        <select name="workout_id" class="form-select" required>
+                            <option value="">-- Choose Workout --</option>
+                            {% for w in workouts %}
+                            <option value="{{ w.Workout_ID }}">#{{ w.Workout_ID }} - {{ w.Workout_Name }} ({{ w.Difficulty_Level }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info py-2 px-3 small">
+                        <i class="bi bi-info-circle-fill me-1"></i> The system automatically checks and prevents duplicate <code>(Member_ID, Workout_ID)</code> pairs via composite primary key constraints.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-link-45deg me-1"></i> Assign Member to Workout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Enrollments Table -->
+    <div class="col-lg-7">
+        <div class="card table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-list-check me-2"></i>Active Enrollments ({{ assignments|length }} links)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Workout Routine</th>
+                                <th>Trainer</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in assignments %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('members.show', id=a.member.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ a.member.Name }}
+                                    </a>
+                                    <div class="small text-muted">ID: #{{ a.Member_ID }}</div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('workouts.show', id=a.workout.Workout_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ a.workout.Workout_Name }}
+                                    </a>
+                                    <div class="small text-muted">{{ a.workout.Difficulty_Level }} &bull; {{ a.workout.Duration_Minutes }}m</div>
+                                </td>
+                                <td>
+                                    {% if a.workout.trainer %}
+                                        {{ a.workout.trainer.Name }}
+                                    {% else %}
+                                        <span class="text-muted fst-italic">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <form method="POST" action="{{ url_for('workouts.remove_member', workout_id=a.Workout_ID, member_id=a.Member_ID) }}" onsubmit="return confirm('Remove this participation?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove enrollment">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No workout assignments recorded yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

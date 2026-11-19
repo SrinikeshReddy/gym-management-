@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Payments - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-cash-stack text-info me-2"></i>Payment Management</h2>
+        <span class="text-muted small">Track subscription payments, trainer fees, receipts, and invoices</span>
+    </div>
+    <div>
+        <a href="{{ url_for('payments.add') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill me-1"></i> Record Offline Payment
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('payments.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Invoice # or Txn ID..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="Success" {% if status_filter == 'Success' %}selected{% endif %}>Success</option>
+                    <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Failed" {% if status_filter == 'Failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="method" class="form-select">
+                    <option value="">All Methods</option>
+                    <option value="Cash" {% if method_filter == 'Cash' %}selected{% endif %}>Cash</option>
+                    <option value="Card" {% if method_filter == 'Card' %}selected{% endif %}>Card</option>
+                    <option value="UPI" {% if method_filter == 'UPI' %}selected{% endif %}>UPI</option>
+                    <option value="NetBanking" {% if method_filter == 'NetBanking' %}selected{% endif %}>NetBanking</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_from" class="form-control" placeholder="From Date" value="{{ date_from }}" title="From Date">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_to" class="form-control" placeholder="To Date" value="{{ date_to }}" title="To Date">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-dark w-100">Filter</button>
+            </div>
+            {% if search_query or status_filter or method_filter or date_from or date_to %}
+            <div class="col-12 mt-2">
+                <a href="{{ url_for('payments.index') }}" class="text-muted small text-decoration-none">
+                    <i class="bi bi-x-circle me-1"></i> Clear filters
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Payments Table -->
+<div class="card table-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Payment Transactions ({{ payments|length }} records)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Member & Plan</th>
+                        <th>Trainer</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Payment Date</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('payments.show', id=p.Payment_ID) }}" class="fw-bold text-decoration-none">
+                                {{ p.Invoice_Number }}
+                            </a>
+                            <div class="small text-muted text-truncate" style="max-width: 140px;">
+                                {{ p.Transaction_ID or '-' }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if p.membership %}
+                                <a href="{{ url_for('members.show', id=p.membership.member.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                    {{ p.membership.member.Name }}
+                                </a>
+                                <div class="small text-muted">{{ p.membership.Plan_Name }} Plan</div>
+                            {% else %}
+                                <span class="text-muted fst-italic">Independent Fee</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.trainer %}
+                                <a href="{{ url_for('trainers.show', id=p.trainer.Trainer_ID) }}" class="text-decoration-none">
+                                    {{ p.trainer.Name }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold fs-6">₹{{ "{:,.2f}".format(p.Amount) }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                <i class="bi {% if p.Payment_Method == 'Cash' %}bi-cash{% elif p.Payment_Method == 'Card' %}bi-credit-card{% elif p.Payment_Method == 'UPI' %}bi-qr-code{% else %}bi-bank{% endif %} me-1"></i>
+                                {{ p.Payment_Method }}
+                            </span>
+                        </td>
+                        <td>{{ p.Payment_Date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="badge {% if p.Status == 'Success' %}bg-success{% elif p.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ p.Status }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('payments.invoice', id=p.Payment_ID) }}" class="btn btn-outline-info" title="Print Invoice">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                                <a href="{{ url_for('payments.show', id=p.Payment_ID) }}" class="btn btn-outline-primary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('payments.edit', id=p.Payment_ID) }}" class="btn btn-outline-secondary" title="Edit Payment">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('payments.delete', id=p.Payment_ID) }}" class="d-inline" onsubmit="return confirmDelete('payment record');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete Payment">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No payments found matching your search.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

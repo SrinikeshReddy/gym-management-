@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Workouts - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Workout Management</h2>
+        <span class="text-muted small">Manage workout routines, trainer assignments, and member enrollments</span>
+    </div>
+    <div>
+        <a href="{{ url_for('workouts.assign') }}" class="btn btn-outline-primary me-1">
+            <i class="bi bi-person-check-fill me-1"></i> Assign Member to Workout
+        </a>
+        <a href="{{ url_for('workouts.add') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill me-1"></i> Create Workout
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('workouts.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by Workout Name..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="difficulty" class="form-select">
+                    <option value="">All Difficulties</option>
+                    <option value="Easy" {% if difficulty_filter == 'Easy' %}selected{% endif %}>Easy</option>
+                    <option value="Medium" {% if difficulty_filter == 'Medium' %}selected{% endif %}>Medium</option>
+                    <option value="Hard" {% if difficulty_filter == 'Hard' %}selected{% endif %}>Hard</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="trainer" class="form-select">
+                    <option value="">All Trainers</option>
+                    {% for t in trainers %}
+                    <option value="{{ t.Trainer_ID }}" {% if trainer_filter == t.Trainer_ID|string %}selected{% endif %}>
+                        {{ t.Name }} ({{ t.Specialization }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-dark w-100">Filter</button>
+            </div>
+            {% if search_query or difficulty_filter or trainer_filter %}
+            <div class="col-12 mt-2">
+                <a href="{{ url_for('workouts.index') }}" class="text-muted small text-decoration-none">
+                    <i class="bi bi-x-circle me-1"></i> Clear filters
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Workouts Table -->
+<div class="card table-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Workout Routines ({{ workouts|length }} records)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Workout Routine</th>
+                        <th>Difficulty</th>
+                        <th>Duration</th>
+                        <th>Calories</th>
+                        <th>Trainer in Charge</th>
+                        <th>Enrolled Trainees</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for w in workouts %}
+                    <tr>
+                        <td class="fw-bold">#{{ w.Workout_ID }}</td>
+                        <td>
+                            <a href="{{ url_for('workouts.show', id=w.Workout_ID) }}" class="fw-semibold text-decoration-none">
+                                {{ w.Workout_Name }}
+                            </a>
+                            <div class="small text-muted text-truncate" style="max-width: 250px;">
+                                {{ w.Description or 'No description provided' }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if w.Difficulty_Level == 'Easy' %}bg-success{% elif w.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ w.Difficulty_Level }}
+                            </span>
+                        </td>
+                        <td>{{ w.Duration_Minutes }} mins</td>
+                        <td><span class="badge bg-light text-dark border">{{ w.Calories_Burn }} kcal</span></td>
+                        <td>
+                            {% if w.trainer %}
+                                <a href="{{ url_for('trainers.show', id=w.trainer.Trainer_ID) }}" class="text-decoration-none">
+                                    {{ w.trainer.Name }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted fst-italic">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border">
+                                {{ w.participations|length }} members
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('workouts.show', id=w.Workout_ID) }}" class="btn btn-outline-primary" title="View Workout Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('workouts.edit', id=w.Workout_ID) }}" class="btn btn-outline-secondary" title="Edit Workout">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('workouts.delete', id=w.Workout_ID) }}" class="d-inline" onsubmit="return confirmDelete('workout routine');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete Workout">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No workouts found matching your search.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Offline Payment - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-wallet2 text-info me-2"></i>Record Offline Payment</h2>
+        <span class="text-muted small">Record manual in-person transactions (Cash, POS Card, Bank Transfer)</span>
+    </div>
+    <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Payments
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-info"><i class="bi bi-cash-stack me-2"></i>Offline Payment Details</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('payments.add') }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Membership Plan</label>
+                            <select name="membership_id" id="membershipSelect" class="form-select">
+                                <option value="">-- None / Direct Fee --</option>
+                                {% for ms in memberships %}
+                                <option value="{{ ms.Membership_ID }}"
+                                        data-amount="{{ ms.balance_due if ms.balance_due > 0 else ms.Amount }}"
+                                        {% if (form_data and form_data.get('membership_id') == ms.Membership_ID|string) or (not form_data and preselected_membership_id == ms.Membership_ID) %}selected{% endif %}>
+                                    #{{ ms.Membership_ID }} - {{ ms.member.Name }} ({{ ms.Plan_Name }} &bull; ₹{{ ms.Amount }}{% if ms.balance_due > 0 %} | Due: ₹{{ "{:,.2f}".format(ms.balance_due) }}{% endif %})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Assigned Trainer</label>
+                            <select name="trainer_id" class="form-select">
+                                <option value="">-- No Trainer / General Access --</option>
+                                {% for t in trainers %}
+                                <option value="{{ t.Trainer_ID }}">{{ t.Name }} ({{ t.Specialization }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Amount Paid (₹) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" id="amountInput" name="amount" class="form-control"
+                                   placeholder="e.g. 5000.00"
+                                   value="{{ form_data.get('amount') if form_data else (suggested_amount if suggested_amount is not none else '') }}"
+                                   required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Payment Method <span class="text-danger">*</span></label>
+                            <select name="payment_method" class="form-select" required>
+                                <option value="Cash" {% if not form_data or form_data.get('payment_method') == 'Cash' %}selected{% endif %}>Cash (Manual Payment)</option>
+                                <option value="Card" {% if form_data and form_data.get('payment_method') == 'Card' %}selected{% endif %}>Card (POS Swipe Machine)</option>
+                                <option value="NetBanking" {% if form_data and form_data.get('payment_method') == 'NetBanking' %}selected{% endif %}>Bank Transfer / Cheque</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" name="payment_date" class="form-control" value="{{ default_date }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Due Date (Optional)</label>
+                            <input type="date" name="due_date" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Payment Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="Success" selected>Success</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Invoice Number</label>
+                            <input type="text" name="invoice_number" class="form-control" value="{{ suggested_inv }}" placeholder="Leave blank to auto-generate">
+                            <div class="form-text">Unique invoice identifier</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Receipt / Reference No.</label>
+                            <input type="text" name="transaction_id" class="form-control" placeholder="e.g. Cash Memo / POS Slip #">
+                            <div class="form-text">Optional offline reference number</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('payments.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-1"></i> Record & Generate Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const msSelect = document.getElementById('membershipSelect');
+    const amtInput = document.getElementById('amountInput');
+    if (msSelect && amtInput) {
+        msSelect.addEventListener('change', function() {
+            const selected = msSelect.options[msSelect.selectedIndex];
+            const amount = selected.getAttribute('data-amount');
+            if (amount && (!amtInput.value || amtInput.value === '0' || amtInput.value === '0.00')) {
+                amtInput.value = parseFloat(amount).toFixed(2);
+            }
+        });
+    }
+</script>
+{% endblock %}

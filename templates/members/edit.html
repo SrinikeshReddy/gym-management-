@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ member.Name }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-pencil-square text-primary me-2"></i>Edit Member Details</h2>
+        <span class="text-muted small">Update member record for {{ member.Name }} (ID: #{{ member.Member_ID }})</span>
+    </div>
+    <a href="{{ url_for('members.show', id=member.Member_ID) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Profile
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-primary">Edit Member #{{ member.Member_ID }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('members.edit', id=member.Member_ID) }}">
+                    <!-- Personal Info -->
+                    <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2">Personal Information</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ member.Name }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-select" required>
+                                <option value="Male" {% if member.Gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if member.Gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if member.Gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Blood Group <span class="text-danger">*</span></label>
+                            <select name="blood_group" class="form-select" required>
+                                {% for bg in ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] %}
+                                <option value="{{ bg }}" {% if member.Blood_Group == bg %}selected{% endif %}>{{ bg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" value="{{ member.Date_of_Birth.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                            <input type="number" name="age" id="age" class="form-control" min="10" max="100" value="{{ member.Age }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Join Date <span class="text-danger">*</span></label>
+                            <input type="date" name="join_date" class="form-control" value="{{ member.Join_Date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="Active" {% if member.Status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Inactive" {% if member.Status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2">Contact Details</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" name="phone" class="form-control" value="{{ member.Phone }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" value="{{ member.Email }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Emergency Contact <span class="text-danger">*</span></label>
+                            <input type="tel" name="emergency_contact" class="form-control" value="{{ member.Emergency_Contact }}" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('members.show', id=member.Member_ID) }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-1"></i> Update Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance #{{ attendance.Attendance_ID }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>
+            <i class="bi bi-calendar-check text-warning me-2"></i>Attendance Log #{{ attendance.Attendance_ID }}
+        </h2>
+        <span class="text-muted small">Date: {{ attendance.Date.strftime('%d %B %Y') }} &bull; Member: {{ attendance.member.Name }}</span>
+    </div>
+    <div>
+        <a href="{{ url_for('attendance.edit', id=attendance.Attendance_ID) }}" class="btn btn-outline-secondary me-1">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <form method="POST" action="{{ url_for('attendance.delete', id=attendance.Attendance_ID) }}" class="d-inline" onsubmit="return confirmDelete('attendance record');">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Attendance Information -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 fw-bold">
+                <i class="bi bi-info-circle text-primary me-2"></i>Check-In Details
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Attendance ID</span>
+                        <span class="fw-semibold">#{{ attendance.Attendance_ID }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Attendance Date</span>
+                        <span class="fw-semibold">{{ attendance.Date.strftime('%A, %d %B %Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Member Name</span>
+                        <a href="{{ url_for('members.show', id=attendance.member.Member_ID) }}" class="fw-bold text-decoration-none">
+                            {{ attendance.member.Name }} (#{{ attendance.member.Member_ID }})
+                        </a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Workout Routine</span>
+                        <a href="{{ url_for('workouts.show', id=attendance.workout.Workout_ID) }}" class="fw-semibold text-decoration-none">
+                            {{ attendance.workout.Workout_Name }}
+                        </a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Check-In Time</span>
+                        <span class="badge bg-light text-dark border fs-6">{{ attendance.Check_In_Time.strftime('%H:%M') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Check-Out Time</span>
+                        {% if attendance.Check_Out_Time %}
+                            <span class="badge bg-light text-dark border fs-6">{{ attendance.Check_Out_Time.strftime('%H:%M') }}</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning border">Active Session</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between bg-light py-3">
+                        <span class="fw-bold">Total Workout Duration</span>
+                        <span class="fw-bold text-primary fs-5">{{ attendance.Workout_Duration }} Minutes</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Attendance Remarks -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-chat-left-text text-info me-2"></i>Attendance Remarks & Notes</span>
+                <span class="badge bg-secondary">{{ attendance.remarks|length }} remarks</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Coach observations, trainee feedback, and fitness notes for this session.
+                </p>
+
+                <ul class="list-group mb-3">
+                    {% for r in attendance.remarks %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-quote text-muted me-2 fs-5"></i>
+                            <span>{{ r.Remarks }}</span>
+                        </div>
+                        <form method="POST" action="{{ url_for('attendance.delete_remark', id=attendance.Attendance_ID) }}" onsubmit="return confirm('Remove remark?');">
+                            <input type="hidden" name="remark" value="{{ r.Remarks }}">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2" title="Remove remark">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted small text-center py-3">No remarks recorded for this attendance session yet.</li>
+                    {% endfor %}
+                </ul>
+
+                <!-- Add Remark Form -->
+                <form method="POST" action="{{ url_for('attendance.add_remark', id=attendance.Attendance_ID) }}" class="input-group">
+                    <input type="text" name="remark" class="form-control" placeholder="Add trainer note or feedback..." required>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i> Add Remark
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

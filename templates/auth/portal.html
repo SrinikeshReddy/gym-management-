@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block title %}Member Portal - {{ member.Name }}{% endblock %}
+
+{% block content %}
+<!-- MEMBER HEADER BANNER -->
+<div class="card bg-white border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 68px; height: 68px;">
+                    {{ member.Name[:1] }}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h3 class="mb-0 fw-bold">{{ member.Name }}</h3>
+                        <span class="badge {% if member.Status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ member.Status }} Member
+                        </span>
+                    </div>
+                    <span class="text-muted small">
+                        Member ID: #{{ member.Member_ID }} &bull; Joined: {{ member.Join_Date.strftime('%d %B %Y') }} &bull; {{ member.Email }} &bull; {{ member.Phone }}
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i> Log Out
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KEY STATS CARDS -->
+<div class="row g-3 mb-4">
+    <!-- Active Membership -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-success border-4 h-100">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Current Subscription</h6>
+                    <h4 class="mb-0 fw-bold text-success">{{ active_membership.Plan_Name if active_membership else 'No Active Plan' }}</h4>
+                    {% if active_membership %}
+                    <span class="text-muted small">Valid till {{ active_membership.End_Date.strftime('%d %b %Y') }}</span>
+                    {% else %}
+                    <span class="text-danger small">Expired / Inactive</span>
+                    {% endif %}
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-card-checklist"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance / Fee Status -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-primary border-4 h-100">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Fee Status</h6>
+                    {% if active_membership %}
+                        {% if active_membership.is_fully_paid %}
+                        <h4 class="mb-0 fw-bold text-success">Fully Paid</h4>
+                        <span class="badge bg-success-subtle text-success mt-1">₹0.00 Balance</span>
+                        {% else %}
+                        <h4 class="mb-0 fw-bold text-danger">₹{{ "{:,.2f}".format(active_membership.balance_due) }}</h4>
+                        <span class="badge bg-danger-subtle text-danger mt-1">Due for payment</span>
+                        {% endif %}
+                    {% else %}
+                    <h4 class="mb-0 fw-bold text-muted">-</h4>
+                    <span class="text-muted small">No active dues</span>
+                    {% endif %}
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Workouts -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-info border-4 h-100">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Assigned Workouts</h6>
+                    <h4 class="mb-0 fw-bold">{{ member_workouts|length }}</h4>
+                    <span class="text-muted small">Active training routines</span>
+                </div>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-heart-pulse"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Attendance -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-warning border-4 h-100">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Total Check-Ins</h6>
+                    <h4 class="mb-0 fw-bold">{{ attendances|length }}</h4>
+                    <span class="text-muted small">Gym sessions recorded</span>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-7">
+        <!-- 1. Enrolled Workouts -->
+        <div class="card table-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-heart-pulse-fill me-2"></i>My Workout Programs</h6>
+            </div>
+            <div class="card-body p-3">
+                {% if member_workouts %}
+                <div class="row g-3">
+                    {% for w in member_workouts %}
+                    <div class="col-md-6">
+                        <div class="card border h-100 p-3 shadow-none bg-light">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0 text-dark">{{ w.Workout_Name }}</h6>
+                                <span class="badge {% if w.Difficulty_Level == 'Easy' %}bg-success{% elif w.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ w.Difficulty_Level }}
+                                </span>
+                            </div>
+                            <p class="small text-muted mb-2">{{ w.Description or 'Standard gym routine program' }}</p>
+                            <div class="small d-flex justify-content-between text-secondary pt-2 border-top">
+                                <span><i class="bi bi-fire text-danger me-1"></i>{{ w.Calories_Burn }} kcal</span>
+                                <span><i class="bi bi-clock me-1"></i>{{ w.Duration_Minutes }} min</span>
+                            </div>
+                            {% if w.trainer %}
+                            <div class="small text-muted mt-2">
+                                <i class="bi bi-person-badge text-primary me-1"></i>Trainer: <strong>{{ w.trainer.Name }}</strong>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3 mb-0">You are not currently enrolled in any workout routines. Contact your gym trainer to assign a workout.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Attendance Logs -->
+        <div class="card table-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-warning"><i class="bi bi-calendar-check-fill me-2"></i>My Attendance History</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Workout Routine</th>
+                                <th>Check-In Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in attendances %}
+                            <tr>
+                                <td class="fw-semibold">{{ a.Date.strftime('%d %B %Y') }}</td>
+                                <td>{{ a.workout.Workout_Name if a.workout else 'General Workout' }}</td>
+                                <td class="text-muted">{{ a.Check_In_Time.strftime('%I:%M %p') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No attendance records found yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Payment Invoices -->
+        <div class="card table-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-success"><i class="bi bi-receipt me-2"></i>My Fee Payment Receipts</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Mode</th>
+                                <th>Status</th>
+                                <th class="text-center">Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments %}
+                            <tr>
+                                <td class="fw-semibold">{{ p.Invoice_Number }}</td>
+                                <td class="small">{{ p.Payment_Date.strftime('%d %b %Y') }}</td>
+                                <td class="fw-bold">₹{{ "{:,.2f}".format(p.Amount) }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ p.Payment_Method }}</span></td>
+                                <td>
+                                    <span class="badge {% if p.Status == 'Success' %}bg-success{% elif p.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ p.Status }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('payments.invoice', id=p.Payment_ID) }}" class="btn btn-sm btn-outline-primary py-0" target="_blank">
+                                        <i class="bi bi-printer me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No payment transactions recorded.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-5">
+        <!-- Membership Card Details -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 fw-bold text-success">
+                <i class="bi bi-card-checklist me-2"></i>Current Membership Details
+            </div>
+            <div class="card-body p-0">
+                {% if active_membership %}
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Plan Name</span>
+                        <span class="fw-bold text-primary">{{ active_membership.Plan_Name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Start Date</span>
+                        <span class="fw-semibold">{{ active_membership.Start_Date.strftime('%d %b %Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">End Date</span>
+                        <span class="fw-semibold">{{ active_membership.End_Date.strftime('%d %b %Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Duration</span>
+                        <span>{{ active_membership.Duration_Days }} Days</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Total Plan Amount</span>
+                        <span class="fw-bold">₹{{ "{:,.2f}".format(active_membership.Amount) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Total Paid</span>
+                        <span class="fw-bold text-success">₹{{ "{:,.2f}".format(active_membership.total_paid) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Balance Due</span>
+                        <span class="fw-bold {% if active_membership.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                            ₹{{ "{:,.2f}".format(active_membership.balance_due) }}
+                        </span>
+                    </li>
+                </ul>
+                {% else %}
+                <div class="p-4 text-center text-muted">No active membership subscription recorded.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Personal Profile Details -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 fw-bold text-dark">
+                <i class="bi bi-person-lines-fill me-2"></i>My Profile Information
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Full Name</span>
+                        <span class="fw-semibold">{{ member.Name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Email</span>
+                        <span>{{ member.Email }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Phone</span>
+                        <span>{{ member.Phone }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Gender / Age</span>
+                        <span>{{ member.Gender }} &bull; {{ member.Age }} yrs</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Blood Group</span>
+                        <span class="badge bg-danger">{{ member.Blood_Group }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Emergency Contact</span>
+                        <span>{{ member.Emergency_Contact }}</span>
+                    </li>
+                    {% if member.addresses %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Address</span>
+                        <span>{{ member.addresses[0].Address }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Attendance - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-clock-fill text-warning me-2"></i>Log Member Attendance</h2>
+        <span class="text-muted small">Record daily workout attendance and coach feedback remarks</span>
+    </div>
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Attendance
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark">Attendance Check-In / Check-Out Form</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('attendance.add') }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Member <span class="text-danger">*</span></label>
+                            <select name="member_id" class="form-select" required>
+                                <option value="">-- Choose Member --</option>
+                                {% for m in members %}
+                                <option value="{{ m.Member_ID }}" {% if form_data and form_data.member_id == m.Member_ID|string %}selected{% endif %}>#{{ m.Member_ID }} - {{ m.Name }} (Phone: {{ m.Phone }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Workout Routine <span class="text-danger">*</span></label>
+                            <select name="workout_id" class="form-select" required>
+                                <option value="">-- Choose Workout Routine --</option>
+                                {% for w in workouts %}
+                                <option value="{{ w.Workout_ID }}" {% if form_data and form_data.workout_id == w.Workout_ID|string %}selected{% endif %}>{{ w.Workout_Name }} ({{ w.Difficulty_Level }} &bull; {{ w.Duration_Minutes }}m)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Attendance Date <span class="text-danger">*</span></label>
+                            <input type="date" name="date" class="form-control" value="{{ form_data.date if form_data and form_data.date else default_date }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-In Time <span class="text-danger">*</span></label>
+                            <input type="time" name="check_in_time" id="check_in_time" class="form-control" value="{{ form_data.check_in_time if form_data and form_data.check_in_time else default_time }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-Out Time</label>
+                            <input type="time" name="check_out_time" id="check_out_time" class="form-control" value="{{ form_data.check_out_time if form_data and form_data.check_out_time else '' }}">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Workout Duration (Minutes)</label>
+                            <input type="text" id="workout_duration" class="form-control bg-light" placeholder="Auto-calculated from Check-In & Check-Out times" readonly>
+                            <div class="form-text">Calculated automatically on time change or check-out submission.</div>
+                        </div>
+
+                        <!-- Remarks Section -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">
+                                Attendance Remarks & Trainer Notes
+                            </label>
+                            <input type="text" name="remarks" class="form-control" placeholder="e.g. Great intensity, completed all working sets, reported knee soreness..." value="{{ form_data.remarks if form_data and form_data.remarks else '' }}">
+                            <div class="form-text">Optional notes or feedback for this session.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('attendance.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i> Save Attendance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

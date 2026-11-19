@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trainer.Name }} - Trainer Details{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>
+            <i class="bi bi-person-badge text-primary me-2"></i>{{ trainer.Name }}
+            <span class="badge bg-primary-subtle text-primary border fs-6 ms-2">
+                {{ trainer.Specialization }}
+            </span>
+        </h2>
+        <span class="text-muted small">Trainer ID: #{{ trainer.Trainer_ID }} &bull; Experience: {{ trainer.Experience_Years }} Years</span>
+    </div>
+    <div>
+        <a href="{{ url_for('trainers.edit', id=trainer.Trainer_ID) }}" class="btn btn-outline-secondary me-1">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <form method="POST" action="{{ url_for('trainers.delete', id=trainer.Trainer_ID) }}" class="d-inline" onsubmit="return confirmDelete('trainer and their records');">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Trainer Profile & Certifications -->
+    <div class="col-lg-4">
+        <!-- Profile Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 fw-bold">
+                <i class="bi bi-person-lines-fill text-primary me-2"></i>Trainer Information
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Trainer ID</span>
+                        <span class="fw-semibold">#{{ trainer.Trainer_ID }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Specialization</span>
+                        <span class="fw-semibold">{{ trainer.Specialization }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Experience</span>
+                        <span class="fw-semibold">{{ trainer.Experience_Years }} Years</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Monthly Salary</span>
+                        <span class="fw-bold text-success">₹{{ "{:,.2f}".format(trainer.Salary) }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Phone</span>
+                        <span class="fw-semibold">{{ trainer.Phone }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Email</span>
+                        <span class="fw-semibold small">{{ trainer.Email }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Certifications Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-award-fill text-warning me-2"></i>Certifications</span>
+                <span class="badge bg-secondary">{{ trainer.certifications|length }}</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group mb-3">
+                    {% for cert in trainer.certifications %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="small fw-semibold"><i class="bi bi-patch-check-fill text-primary me-2"></i>{{ cert.Certification }}</span>
+                        <form method="POST" action="{{ url_for('trainers.delete_cert', id=trainer.Trainer_ID) }}" onsubmit="return confirm('Remove certification?');">
+                            <input type="hidden" name="certification" value="{{ cert.Certification }}">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2" title="Remove certification">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted small">No certifications registered yet.</li>
+                    {% endfor %}
+                </ul>
+
+                <!-- Add Certification Form -->
+                <form method="POST" action="{{ url_for('trainers.add_cert', id=trainer.Trainer_ID) }}" class="input-group input-group-sm">
+                    <input type="text" name="certification" class="form-control" placeholder="Add certificate name..." required>
+                    <button class="btn btn-outline-primary" type="submit">Add</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Assigned Workouts & Related Payments -->
+    <div class="col-lg-8">
+        <!-- 1. Assigned Workouts -->
+        <div class="card table-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-heart-pulse text-danger me-2"></i>Assigned Workout Routines</span>
+                <a href="{{ url_for('workouts.add') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg me-1"></i> New Workout
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Workout Name</th>
+                                <th>Difficulty</th>
+                                <th>Duration</th>
+                                <th>Calories</th>
+                                <th>Trainees Enrolled</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for w in trainer.workouts %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('workouts.show', id=w.Workout_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ w.Workout_Name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge {% if w.Difficulty_Level == 'Easy' %}bg-success{% elif w.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ w.Difficulty_Level }}
+                                    </span>
+                                </td>
+                                <td>{{ w.Duration_Minutes }} mins</td>
+                                <td>{{ w.Calories_Burn }} kcal</td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary border">
+                                        {{ w.participations|length }} members
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No workouts currently assigned to this trainer.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Related Payments -->
+        <div class="card table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-cash-stack text-success me-2"></i>Related Payments & Trainer Fees</span>
+                <span class="badge bg-secondary">{{ trainer.payments|length }} payments</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in trainer.payments %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('payments.show', id=p.Payment_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ p.Invoice_Number }}
+                                    </a>
+                                </td>
+                                <td>{{ p.Payment_Date.strftime('%Y-%m-%d') }}</td>
+                                <td class="fw-semibold">₹{{ "{:,.2f}".format(p.Amount) }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ p.Payment_Method }}</span></td>
+                                <td>
+                                    <span class="badge {% if p.Status == 'Success' %}bg-success{% elif p.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ p.Status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No related payments associated with this trainer.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gym Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1120 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+        }
+        .login-header {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 2rem 1.5rem 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid #0d6efd;
+        }
+        .nav-pills .nav-link {
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: #475569;
+            padding: 0.65rem 1rem;
+            transition: all 0.2s ease;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+        }
+        .demo-pill {
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.78rem;
+        }
+        .demo-pill:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-25 rounded-circle p-3 mb-2">
+            <i class="bi bi-activity text-primary fs-1"></i>
+        </div>
+        <h4 class="fw-bold mb-1 tracking-wide">GYM MANAGEMENT SYSTEM</h4>
+        <p class="text-secondary small mb-0">Choose your login portal to access your account</p>
+    </div>
+
+    <!-- Body -->
+    <div class="p-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show py-2 small" role="alert">
+                        {% if category == 'success' %}
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                        {% elif category == 'danger' %}
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        {% elif category == 'warning' %}
+                            <i class="bi bi-exclamation-circle-fill me-1"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Role Tabs: 1. User / Member, 2. Admin -->
+        <ul class="nav nav-pills nav-fill bg-light p-1 rounded-3 mb-4" id="loginTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'user' %}active{% endif %}" id="user-tab" data-bs-toggle="pill" data-bs-target="#user-login" type="button" role="tab">
+                    <i class="bi bi-person-fill me-1"></i> Member Login
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab != 'user' %}active{% endif %}" id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin-login" type="button" role="tab">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Admin Login
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="loginTabsContent">
+            <!-- 1. USER / MEMBER LOGIN TAB -->
+            <div class="tab-pane fade {% if active_tab == 'user' %}show active{% endif %}" id="user-login" role="tabpanel">
+                <div class="text-center mb-3">
+                    <h5 class="fw-bold text-dark mb-1">Member Portal Login</h5>
+                    <span class="text-muted small">View your active membership, workouts, attendance & receipts</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+                    <input type="hidden" name="login_type" value="user">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Email or Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                            <input type="text" name="identifier" id="userIdentifier" class="form-control"
+                                   placeholder="e.g. {{ sample_member_email }} or Phone"
+                                   value="{{ user_identifier or '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+                            <input type="password" name="password" id="userPassword" class="form-control"
+                                   placeholder="Enter password (default: member123)" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('userPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In as Member
+                    </button>
+
+                    <div class="text-center mt-3 pt-2 border-top">
+                        <span class="text-muted small">Don't have a membership account?</span><br>
+                        <a href="{{ url_for('auth.register') }}" class="text-primary fw-semibold small text-decoration-none">
+                            <i class="bi bi-person-plus-fill me-1"></i>Register as a New Member
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 2. ADMIN LOGIN TAB -->
+            <div class="tab-pane fade {% if active_tab != 'user' %}show active{% endif %}" id="admin-login" role="tabpanel">
+                <div class="text-center mb-3">
+                    <h5 class="fw-bold text-dark mb-1">Administrator Login</h5>
+                    <span class="text-muted small">Manage gym members, trainers, workouts & finances</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+                    <input type="hidden" name="login_type" value="admin">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Admin Username or Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-shield-person"></i></span>
+                            <input type="text" name="username" id="adminUsername" class="form-control"
+                                   placeholder="Username or email"
+                                   value="{{ admin_username or '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-secondary">Admin Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                            <input type="password" name="password" id="adminPassword" class="form-control"
+                                   placeholder="Password" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('adminPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold">
+                        <i class="bi bi-shield-lock me-1"></i> Log In as Administrator
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-light py-2 text-center text-muted border-top" style="font-size: 0.75rem;">
+        Gym Management System &bull; Titan Fitness
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    function fillAdminDemo() {
+        document.getElementById('adminUsername').value = 'admin';
+        document.getElementById('adminPassword').value = 'admin123';
+    }
+
+    function fillMemberDemo(email) {
+        document.getElementById('userIdentifier').value = email || 'sneha.rao@outlook.com';
+        document.getElementById('userPassword').value = 'member123';
+    }
+</script>
+</body>
+</html>
+

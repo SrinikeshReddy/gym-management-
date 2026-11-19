@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-calendar-check-fill text-warning me-2"></i>Attendance Management</h2>
+        <span class="text-muted small">Daily check-in/out logs, workout duration tracking, and trainer remarks</span>
+    </div>
+    <a href="{{ url_for('attendance.add') }}" class="btn btn-warning text-dark fw-semibold">
+        <i class="bi bi-clock-fill me-1"></i> Log Attendance
+    </a>
+</div>
+
+<!-- Search & Filters -->
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('attendance.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="date" name="date" class="form-control" value="{{ date_filter }}" placeholder="Filter by Date" title="Attendance Date">
+            </div>
+            <div class="col-md-4">
+                <select name="member_id" class="form-select">
+                    <option value="">All Members</option>
+                    {% for m in members %}
+                    <option value="{{ m.Member_ID }}" {% if member_filter == m.Member_ID|string %}selected{% endif %}>
+                        {{ m.Name }} (Phone: {{ m.Phone }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="workout_id" class="form-select">
+                    <option value="">All Workout Routines</option>
+                    {% for w in workouts %}
+                    <option value="{{ w.Workout_ID }}" {% if workout_filter == w.Workout_ID|string %}selected{% endif %}>
+                        {{ w.Workout_Name }} ({{ w.Difficulty_Level }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-dark w-100">Filter</button>
+            </div>
+            {% if date_filter or member_filter or workout_filter %}
+            <div class="col-12 mt-2">
+                <a href="{{ url_for('attendance.index') }}" class="text-muted small text-decoration-none">
+                    <i class="bi bi-x-circle me-1"></i> Clear filters
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card table-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Attendance Logs ({{ attendances|length }} records)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Member Name</th>
+                        <th>Workout Routine</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Duration</th>
+                        <th>Remarks</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attendances %}
+                    <tr>
+                        <td class="fw-bold">#{{ a.Attendance_ID }}</td>
+                        <td class="fw-semibold">{{ a.Date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('members.show', id=a.member.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                {{ a.member.Name }}
+                            </a>
+                            <div class="small text-muted">{{ a.member.Phone }}</div>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('workouts.show', id=a.workout.Workout_ID) }}" class="text-decoration-none">
+                                {{ a.workout.Workout_Name }}
+                            </a>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ a.Check_In_Time.strftime('%H:%M') }}</span></td>
+                        <td>
+                            {% if a.Check_Out_Time %}
+                                <span class="badge bg-light text-dark border">{{ a.Check_Out_Time.strftime('%H:%M') }}</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-primary">{{ a.Workout_Duration }} mins</span>
+                        </td>
+                        <td>
+                            {% if a.remarks %}
+                                <a href="{{ url_for('attendance.show', id=a.Attendance_ID) }}" class="badge bg-secondary-subtle text-secondary border text-decoration-none">
+                                    {{ a.remarks|length }} remarks
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('attendance.show', id=a.Attendance_ID) }}" class="btn btn-outline-primary" title="View Attendance & Remarks">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('attendance.edit', id=a.Attendance_ID) }}" class="btn btn-outline-secondary" title="Edit Log">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('attendance.delete', id=a.Attendance_ID) }}" class="d-inline" onsubmit="return confirmDelete('attendance record');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete Attendance">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No attendance records found matching your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

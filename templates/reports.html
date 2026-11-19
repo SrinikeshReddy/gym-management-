@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header no-print">
+    <div>
+        <h2><i class="bi bi-file-earmark-bar-graph-fill text-primary me-2"></i>Gym Analytical & Business Reports</h2>
+        <span class="text-muted small">Real-time attendance tracking, member activity, and financial performance insights</span>
+    </div>
+    <div>
+        <button onclick="window.print();" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Report Navigation Tabs/Pills -->
+<div class="card mb-4 shadow-sm border-0 no-print">
+    <div class="card-body p-2">
+        <ul class="nav nav-pills flex-column flex-md-row nav-justified gap-1">
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'active_members' %}active{% endif %}" href="{{ url_for('reports.index', type='active_members') }}">
+                    <i class="bi bi-person-check me-1"></i> 1. Active Members
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'expired_memberships' %}active{% endif %}" href="{{ url_for('reports.index', type='expired_memberships') }}">
+                    <i class="bi bi-calendar-x me-1"></i> 2. Expired Plans
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'membership_revenue' %}active{% endif %}" href="{{ url_for('reports.index', type='membership_revenue') }}">
+                    <i class="bi bi-cash-coin me-1"></i> 3. Revenue by Plan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'payment_status' %}active{% endif %}" href="{{ url_for('reports.index', type='payment_status') }}">
+                    <i class="bi bi-pie-chart me-1"></i> 4. Payment Status
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'trainer_workload' %}active{% endif %}" href="{{ url_for('reports.index', type='trainer_workload') }}">
+                    <i class="bi bi-person-workspace me-1"></i> 5. Trainer Workload
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'workout_participation' %}active{% endif %}" href="{{ url_for('reports.index', type='workout_participation') }}">
+                    <i class="bi bi-heart-pulse me-1"></i> 6. Participation
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'daily_attendance' %}active{% endif %}" href="{{ url_for('reports.index', type='daily_attendance') }}">
+                    <i class="bi bi-calendar-day me-1"></i> 7. Daily Attendance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'monthly_attendance' %}active{% endif %}" href="{{ url_for('reports.index', type='monthly_attendance') }}">
+                    <i class="bi bi-calendar-month me-1"></i> 8. Monthly Attendance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if report_type == 'member_history' %}active{% endif %}" href="{{ url_for('reports.index', type='member_history') }}">
+                    <i class="bi bi-clock-history me-1"></i> 9. Member History
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 1: ACTIVE MEMBERS -->
+<!-- ========================================================================= -->
+{% if report_type == 'active_members' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-person-check-fill me-2"></i>Report 1: Active Gym Members</h5>
+            <span class="text-muted small">Current active member records sorted by enrollment date</span>
+        </div>
+        <span class="badge bg-success fs-6">{{ data.members|length }} Active Members</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Age / Gender</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Join Date</th>
+                        <th>Blood Group</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in data.members %}
+                    <tr>
+                        <td class="fw-bold">#{{ m.Member_ID }}</td>
+                        <td class="fw-semibold">
+                            <a href="{{ url_for('members.show', id=m.Member_ID) }}" class="text-decoration-none">{{ m.Name }}</a>
+                        </td>
+                        <td>{{ m.Age }} yrs ({{ m.Gender }})</td>
+                        <td>{{ m.Phone }}</td>
+                        <td class="small">{{ m.Email }}</td>
+                        <td>{{ m.Join_Date.strftime('%Y-%m-%d') }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ m.Blood_Group }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No active members found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 2: EXPIRED MEMBERSHIPS -->
+<!-- ========================================================================= -->
+{% elif report_type == 'expired_memberships' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 fw-bold text-danger"><i class="bi bi-calendar-x-fill me-2"></i>Report 2: Expired Memberships</h5>
+            <span class="text-muted small">Subscription plans that have expired or reached maturity</span>
+        </div>
+        <span class="badge bg-danger fs-6">{{ data.memberships|length }} Expired Plans</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Membership ID</th>
+                        <th>Member Name</th>
+                        <th>Contact</th>
+                        <th>Plan Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Amount Paid</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ms in data.memberships %}
+                    <tr>
+                        <td class="fw-bold">#{{ ms.Membership_ID }}</td>
+                        <td class="fw-semibold">
+                            <a href="{{ url_for('members.show', id=ms.member.Member_ID) }}" class="text-decoration-none">
+                                {{ ms.member.Name }}
+                            </a>
+                        </td>
+                        <td>{{ ms.member.Phone }}</td>
+                        <td><span class="badge bg-secondary">{{ ms.Plan_Name }}</span></td>
+                        <td>{{ ms.Start_Date.strftime('%Y-%m-%d') }}</td>
+                        <td class="text-danger fw-semibold">{{ ms.End_Date.strftime('%Y-%m-%d') }}</td>
+                        <td>₹{{ "{:,.2f}".format(ms.Amount) }}</td>
+                        <td>
+                            <a href="{{ url_for('memberships.add') }}" class="btn btn-sm btn-outline-success py-0">
+                                Renew
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No expired memberships found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 3: MEMBERSHIP REVENUE -->
+<!-- ========================================================================= -->
+{% elif report_type == 'membership_revenue' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 fw-bold text-success"><i class="bi bi-cash-coin me-2"></i>Report 3: Membership Revenue Breakdown</h5>
+            <span class="text-muted small">Aggregated plan earnings, average rates, and subscriber volume</span>
+        </div>
+        <span class="badge bg-success fs-6">Grand Total: ₹{{ "{:,.2f}".format(data.grand_total) }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Membership Plan</th>
+                        <th class="text-center">Subscribers Count</th>
+                        <th class="text-end">Average Price (₹)</th>
+                        <th class="text-end">Min Price (₹)</th>
+                        <th class="text-end">Max Price (₹)</th>
+                        <th class="text-end">Total Revenue (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.plan_revenue %}
+                    <tr>
+                        <td class="fw-bold">{{ row.Plan_Name }}</td>
+                        <td class="text-center"><span class="badge bg-primary-subtle text-primary">{{ row.subscribers }}</span></td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(row.avg_revenue) }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(row.min_revenue) }}</td>
+                        <td class="text-end">₹{{ "{:,.2f}".format(row.max_revenue) }}</td>
+                        <td class="text-end fw-bold text-success fs-6">₹{{ "{:,.2f}".format(row.total_revenue) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-light fw-bold">
+                        <th>Total Subscriptions</th>
+                        <th class="text-center">{{ data.total_subscribers }}</th>
+                        <th colspan="3" class="text-end">Consolidated Total:</th>
+                        <th class="text-end text-success fs-5">₹{{ "{:,.2f}".format(data.grand_total) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 4: PAYMENT STATUS -->
+<!-- ========================================================================= -->
+{% elif report_type == 'payment_status' %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card table-card h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Status Breakdown</h5>
+                <span class="text-muted small">Distribution of transactions across statuses</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Status</th>
+                            <th class="text-center">Transaction Count</th>
+                            <th class="text-end">Total Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data.status_breakdown %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if row.Status == 'Success' %}bg-success{% elif row.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ row.Status }}
+                                </span>
+                            </td>
+                            <td class="text-center">{{ row.count }}</td>
+                            <td class="text-end fw-semibold">₹{{ "{:,.2f}".format(row.total_amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card table-card h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-credit-card text-success me-2"></i>Payment Methods (Successful)</h5>
+                <span class="text-muted small">Breakdown of revenue across offline and direct payment methods</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Payment Method</th>
+                            <th class="text-center">Count</th>
+                            <th class="text-end">Total Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data.method_breakdown %}
+                        <tr>
+                            <td class="fw-semibold">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>{{ row.Payment_Method }}
+                            </td>
+                            <td class="text-center">{{ row.count }}</td>
+                            <td class="text-end fw-semibold">₹{{ "{:,.2f}".format(row.total_amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 5: TRAINER WORKLOAD -->
+<!-- ========================================================================= -->
+{% elif report_type == 'trainer_workload' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-person-workspace text-primary me-2"></i>Report 5: Trainer Workload & Coached Members</h5>
+        <span class="text-muted small">Overview of instructor routines and active trainee counts</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Trainer ID</th>
+                        <th>Trainer Name</th>
+                        <th>Specialization</th>
+                        <th>Experience</th>
+                        <th>Salary</th>
+                        <th class="text-center">Workouts Assigned</th>
+                        <th class="text-center">Unique Members Coached</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.workload %}
+                    <tr>
+                        <td class="fw-bold">#{{ row.Trainer_ID }}</td>
+                        <td>
+                            <a href="{{ url_for('trainers.show', id=row.Trainer_ID) }}" class="fw-semibold text-decoration-none">
+                                {{ row.Name }}
+                            </a>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ row.Specialization }}</span></td>
+                        <td>{{ row.Experience_Years }} yrs</td>
+                        <td>₹{{ "{:,.2f}".format(row.Salary) }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary-subtle text-primary border">{{ row.workouts_count }} routines</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success-subtle text-success border fs-6">{{ row.trainees_count }} trainees</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 6: WORKOUT PARTICIPATION -->
+<!-- ========================================================================= -->
+{% elif report_type == 'workout_participation' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-danger"><i class="bi bi-heart-pulse-fill me-2"></i>Report 6: Workout Popularity & Participation</h5>
+        <span class="text-muted small">Analysis of member enrollment and participation metrics across routines</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Workout ID</th>
+                        <th>Workout Routine</th>
+                        <th>Difficulty</th>
+                        <th>Burn Rate</th>
+                        <th>Trainer</th>
+                        <th class="text-center">Enrolled Members</th>
+                        <th class="text-center">Total Attendance Logs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.participation %}
+                    <tr>
+                        <td class="fw-bold">#{{ row.Workout_ID }}</td>
+                        <td class="fw-semibold">
+                            <a href="{{ url_for('workouts.show', id=row.Workout_ID) }}" class="text-decoration-none">
+                                {{ row.Workout_Name }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge {% if row.Difficulty_Level == 'Easy' %}bg-success{% elif row.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ row.Difficulty_Level }}
+                            </span>
+                        </td>
+                        <td>{{ row.Calories_Burn }} kcal</td>
+                        <td>{{ row.trainer_name or 'Unassigned' }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ row.enrolled_members }} members</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">{{ row.attendance_sessions }} sessions</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 7: DAILY ATTENDANCE -->
+<!-- ========================================================================= -->
+{% elif report_type == 'daily_attendance' %}
+<div class="card mb-4 shadow-sm border-0 no-print">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('reports.index') }}" class="row g-2 align-items-center">
+            <input type="hidden" name="type" value="daily_attendance">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">From Date:</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">To Date:</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-dark w-100">
+                    <i class="bi bi-funnel me-1"></i> Apply Date Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-warning text-dark"><i class="bi bi-calendar-day-fill text-warning me-2"></i>Report 7: Daily Gym Attendance Breakdown</h5>
+        <span class="text-muted small">Daily check-in volume and session activity summary</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Day of Week</th>
+                        <th class="text-center">Total Member Check-Ins</th>
+                        <th class="text-end">Average Session Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.daily %}
+                    <tr>
+                        <td class="fw-bold">{{ row.Date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ row.Date.strftime('%A') }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ row.total_checkins }} visits</span>
+                        </td>
+                        <td class="text-end fw-semibold">{{ "{:.1f}".format(row.avg_duration or 0) }} Minutes</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No attendance logs found for selected period.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 8: MONTHLY ATTENDANCE -->
+<!-- ========================================================================= -->
+{% elif report_type == 'monthly_attendance' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-month-fill text-primary me-2"></i>Report 8: Monthly Gym Attendance Aggregation</h5>
+        <span class="text-muted small">Cross-table aggregate of monthly workout visits and total fitness hours logged</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Month (YYYY-MM)</th>
+                        <th class="text-center">Total Check-In Count</th>
+                        <th class="text-end">Total Workout Minutes</th>
+                        <th class="text-end">Equivalent Training Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.monthly %}
+                    <tr>
+                        <td class="fw-bold fs-6">{{ row.month }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-success fs-6">{{ row.count }} visits</span>
+                        </td>
+                        <td class="text-end">{{ row.duration }} mins</td>
+                        <td class="text-end fw-bold text-primary">{{ "{:.1f}".format(row.duration / 60) }} hours</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No monthly attendance data found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- REPORT 9: MEMBER ATTENDANCE HISTORY -->
+<!-- ========================================================================= -->
+{% elif report_type == 'member_history' %}
+<div class="card table-card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history text-info me-2"></i>Report 9: Member Attendance History & Engagement</h5>
+        <span class="text-muted small">Individual check-in metrics and member engagement rankings</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th class="text-center">Total Visits</th>
+                        <th class="text-end">Total Minutes Logged</th>
+                        <th>Last Visit Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.member_stats %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('members.show', id=row.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                {{ row.Name }}
+                            </a>
+                        </td>
+                        <td>{{ row.Phone }}</td>
+                        <td>
+                            <span class="badge {% if row.Status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ row.Status }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ row.visit_count }}</span>
+                        </td>
+                        <td class="text-end fw-semibold text-success">{{ row.total_minutes }} mins</td>
+                        <td>{{ row.last_visit.strftime('%Y-%m-%d') if row.last_visit else 'Never' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

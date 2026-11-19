@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard Overview</h2>
+        <span class="text-muted small">Real-time gym operations, memberships, and facility statistics</span>
+    </div>
+    <div>
+        <a href="{{ url_for('members.add') }}" class="btn btn-sm btn-primary me-1">
+            <i class="bi bi-person-plus-fill me-1"></i> Add Member
+        </a>
+        <a href="{{ url_for('attendance.add') }}" class="btn btn-sm btn-success me-1">
+            <i class="bi bi-clock-fill me-1"></i> Log Attendance
+        </a>
+        <a href="{{ url_for('payments.add') }}" class="btn btn-sm btn-info text-white">
+            <i class="bi bi-credit-card-fill me-1"></i> Record Payment
+        </a>
+    </div>
+</div>
+
+<!-- 1. METRIC CARDS -->
+<div class="row g-3 mb-4">
+    <!-- Total Members -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-primary border-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Total Members</h6>
+                    <h3 class="mb-0 fw-bold">{{ total_members }}</h3>
+                    <span class="badge bg-success-subtle text-success mt-1">{{ active_members }} Active</span>
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Memberships -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-success border-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Active Memberships</h6>
+                    <h3 class="mb-0 fw-bold">{{ active_memberships }}</h3>
+                    <span class="text-muted small">Valid Subscriptions</span>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-card-checklist"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Revenue / Payments -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-info border-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Total Revenue</h6>
+                    <h3 class="mb-0 fw-bold">₹{{ "{:,.2f}".format(total_payments_revenue) }}</h3>
+                    <span class="badge bg-info-subtle text-info mt-1">Successful Payments</span>
+                </div>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Attendance -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-white border-start border-warning border-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-semibold mb-1 small">Today's Attendance</h6>
+                    <h3 class="mb-0 fw-bold">{{ today_attendance_count }}</h3>
+                    <span class="text-muted small">Sessions checked in today</span>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small text-uppercase">Total Certified Trainers</span>
+                <h4 class="fw-bold mb-0 text-dark">{{ total_trainers }}</h4>
+            </div>
+            <a href="{{ url_for('trainers.index') }}" class="btn btn-outline-primary btn-sm">View Trainers</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small text-uppercase">Workout Routines Offered</span>
+                <h4 class="fw-bold mb-0 text-dark">{{ total_workouts }}</h4>
+            </div>
+            <a href="{{ url_for('workouts.index') }}" class="btn btn-outline-primary btn-sm">View Workouts</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small text-uppercase">System Status</span>
+                <h6 class="fw-bold mb-0 text-success"><i class="bi bi-check-circle-fill me-1"></i> System Online</h6>
+            </div>
+            <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm">View Reports</a>
+        </div>
+    </div>
+</div>
+
+<!-- 2. RECENT RECORDS SECTION -->
+<div class="row g-3">
+    <!-- Recent Members -->
+    <div class="col-lg-4">
+        <div class="card table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-check-fill text-primary me-2"></i>Recent Members</span>
+                <a href="{{ url_for('members.index') }}" class="btn btn-sm btn-link p-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in recent_members %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('members.show', id=m.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ m.Name }}
+                                    </a>
+                                </td>
+                                <td class="small">{{ m.Phone }}</td>
+                                <td>
+                                    <span class="badge {% if m.Status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ m.Status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No members found</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="col-lg-4">
+        <div class="card table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-receipt text-success me-2"></i>Recent Payments</span>
+                <a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-link p-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_payments %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('payments.show', id=p.Payment_ID) }}" class="fw-semibold text-decoration-none small">
+                                        {{ p.Invoice_Number }}
+                                    </a>
+                                </td>
+                                <td>₹{{ "{:,.2f}".format(p.Amount) }}</td>
+                                <td>
+                                    <span class="badge {% if p.Status == 'Success' %}bg-success{% elif p.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {{ p.Status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No payments recorded</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent / Today's Attendance -->
+    <div class="col-lg-4">
+        <div class="card table-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-clock-history text-warning me-2"></i>
+                    {% if is_today_attendance %}Today's Attendance{% else %}Recent Attendance{% endif %}
+                </span>
+                <a href="{{ url_for('attendance.index') }}" class="btn btn-sm btn-link p-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Workout</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in recent_attendance %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('members.show', id=a.member.Member_ID) }}" class="fw-semibold text-decoration-none small">
+                                        {{ a.member.Name }}
+                                    </a>
+                                </td>
+                                <td class="small">{{ a.workout.Workout_Name }}</td>
+                                <td class="small text-muted">{{ a.Check_In_Time.strftime('%H:%M') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">No attendance records yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

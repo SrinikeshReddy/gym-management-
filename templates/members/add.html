@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Member - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-person-plus-fill text-primary me-2"></i>Add New Member</h2>
+        <span class="text-muted small">Register a new gym member profile</span>
+    </div>
+    <a href="{{ url_for('members.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Members
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-primary">Member Registration Form</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('members.add') }}">
+                    <!-- Personal Details Section -->
+                    <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2">Personal Information</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Rahul Sharma" value="{{ form_data.name if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-select" required>
+                                <option value="Male" {% if form_data and form_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if form_data and form_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if form_data and form_data.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Blood Group <span class="text-danger">*</span></label>
+                            <select name="blood_group" class="form-select" required>
+                                {% for bg in ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] %}
+                                <option value="{{ bg }}" {% if form_data and form_data.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" value="{{ form_data.date_of_birth if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                            <input type="number" name="age" id="age" class="form-control" min="10" max="100" placeholder="e.g. 24" value="{{ form_data.age if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Join Date <span class="text-danger">*</span></label>
+                            <input type="date" name="join_date" class="form-control" value="{{ form_data.join_date if form_data else default_join_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="Active" {% if not form_data or form_data.status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Inactive" {% if form_data and form_data.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details Section -->
+                    <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2">Contact Details</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" name="phone" class="form-control" placeholder="10-digit Mobile" value="{{ form_data.phone if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" placeholder="name@example.com" value="{{ form_data.email if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Emergency Contact Phone <span class="text-danger">*</span></label>
+                            <input type="tel" name="emergency_contact" class="form-control" placeholder="Emergency contact number" value="{{ form_data.emergency_contact if form_data else '' }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Address Section -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                        <h6 class="text-uppercase text-muted fw-bold small mb-0">
+                            Residential & Contact Addresses
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-address-btn">
+                            <i class="bi bi-plus-circle me-1"></i> Add Another Address
+                        </button>
+                    </div>
+                    <p class="text-muted small">You can add multiple contact addresses for this member.</p>
+                    
+                    <div id="address-fields-container" class="mb-4">
+                        <div class="input-group mb-2 address-row">
+                            <input type="text" name="addresses[]" class="form-control" placeholder="Primary Address (e.g. Flat 101, Sunshine Heights, MG Road)" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('members.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-1"></i> Save Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

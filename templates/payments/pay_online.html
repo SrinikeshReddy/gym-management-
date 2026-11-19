@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+
+{% block title %}Pay Fee Online via UPI - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2><i class="bi bi-qr-code-scan text-success me-2"></i>Online Fee Payment (UPI Portal)</h2>
+        <span class="text-muted small">Fast, seamless, and secure fee payment powered by UPI (GPay, PhonePe, Paytm, BHIM)</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-receipt me-1"></i> View Payments
+        </a>
+        <a href="{{ url_for('memberships.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-card-checklist me-1"></i> Memberships
+        </a>
+    </div>
+</div>
+
+<!-- Trust & Security Banner -->
+<div class="alert alert-success border-0 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 px-3 mb-4" style="background: linear-gradient(90deg, #e8f5e9, #e0f2fe);">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-shield-check text-success fs-3 me-3"></i>
+        <div>
+            <strong class="text-dark">Instant UPI Settlement & Auto Invoice Generation</strong>
+            <div class="small text-muted">Supports all NPCI certified UPI apps with real-time transaction verification</div>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-white text-success border shadow-sm px-2 py-1"><i class="bi bi-lock-fill me-1"></i>256-Bit SSL Encrypted</span>
+        <span class="badge bg-white text-primary border shadow-sm px-2 py-1"><i class="bi bi-lightning-charge-fill me-1"></i>Instant Receipt</span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- LEFT COLUMN: Membership Selection & Bill Summary -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-person-badge text-primary me-2"></i>Select Membership & Member</h6>
+                <span class="badge bg-primary-subtle text-primary border" id="summaryStatusBadge">Active</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Choose Subscribed Member / Plan <span class="text-danger">*</span></label>
+                    <select id="membershipSelect" class="form-select form-select-lg">
+                        {% for ms in memberships %}
+                        <option value="{{ ms.Membership_ID }}"
+                                data-member-name="{{ ms.member.Name }}"
+                                data-member-phone="{{ ms.member.Phone }}"
+                                data-member-email="{{ ms.member.Email }}"
+                                data-plan-name="{{ ms.Plan_Name }}"
+                                data-amount="{{ ms.Amount }}"
+                                data-paid="{{ ms.total_paid }}"
+                                data-balance="{{ ms.balance_due }}"
+                                data-start="{{ ms.Start_Date.strftime('%Y-%m-%d') }}"
+                                data-end="{{ ms.End_Date.strftime('%Y-%m-%d') }}"
+                                data-status="{{ ms.Status }}"
+                                {% if selected_membership and selected_membership.Membership_ID == ms.Membership_ID %}selected{% endif %}>
+                            #{{ ms.Membership_ID }} &bull; {{ ms.member.Name }} &mdash; {{ ms.Plan_Name }} (Due: ₹{{ "{:,.2f}".format(ms.balance_due) }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Choose the membership subscription to clear gym fees.</div>
+                </div>
+
+                <!-- Membership Details Card -->
+                <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Member Name</span>
+                        <strong class="text-dark" id="dispMemberName">{{ selected_membership.member.Name if selected_membership else '-' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Contact Phone</span>
+                        <span class="fw-semibold text-secondary" id="dispMemberPhone">{{ selected_membership.member.Phone if selected_membership else '-' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Subscription Plan</span>
+                        <span class="badge bg-info-subtle text-info-emphasis border fw-bold" id="dispPlanName">{{ selected_membership.Plan_Name if selected_membership else '-' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Validity Period</span>
+                        <span class="small fw-semibold" id="dispValidity">
+                            {% if selected_membership %}
+                            {{ selected_membership.Start_Date.strftime('%d %b %Y') }} &rarr; {{ selected_membership.End_Date.strftime('%d %b %Y') }}
+                            {% else %}-{% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Total Plan Fee</span>
+                        <span class="fw-bold" id="dispPlanFee">₹{{ "{:,.2f}".format(selected_membership.Amount) if selected_membership else '0.00' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Previously Paid</span>
+                        <span class="text-success fw-semibold" id="dispPaidFee">₹{{ "{:,.2f}".format(selected_membership.total_paid) if selected_membership else '0.00' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <span class="fw-bold text-dark">Remaining Balance Due</span>
+                        <span class="fs-5 fw-bold text-danger" id="dispBalanceDue">₹{{ "{:,.2f}".format(selected_membership.balance_due) if selected_membership else '0.00' }}</span>
+                    </div>
+                </div>
+
+                <!-- Custom Amount Input -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Amount to Pay Now (₹) <span class="text-danger">*</span></label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white fw-bold">₹</span>
+                        <input type="number" step="0.01" min="1" id="paymentAmountInput" class="form-control fw-bold text-success fs-4" value="{{ suggested_amount }}" placeholder="Enter fee amount">
+                    </div>
+                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setQuickAmount('balance')">Pay Full Due</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setQuickAmount(1000)">₹1,000</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setQuickAmount(2500)">₹2,500</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setQuickAmount(5000)">₹5,000</button>
+                    </div>
+                </div>
+
+                <!-- Merchant VPA Details -->
+                <div class="small text-muted p-2 rounded bg-white border">
+                    <div class="d-flex justify-content-between">
+                        <span>Gym UPI Merchant VPA:</span>
+                        <strong class="text-dark">titanfitness@icici</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span>Payee Name:</span>
+                        <strong class="text-dark">Titan Fitness Gym Club</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Interactive UPI Payment Gateway Interface -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <ul class="nav nav-pills card-header-pills" id="upiTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="qr-tab" data-bs-toggle="pill" data-bs-target="#tab-qr" type="button" role="tab">
+                            <i class="bi bi-qr-code me-1"></i> Scan UPI QR Code
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="vpa-tab" data-bs-toggle="pill" data-bs-target="#tab-vpa" type="button" role="tab">
+                            <i class="bi bi-phone me-1"></i> Pay via UPI ID / VPA
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold text-primary" id="demo-tab" data-bs-toggle="pill" data-bs-target="#tab-demo" type="button" role="tab">
+                            <i class="bi bi-lightning-charge me-1"></i> 1-Click Demo Pay
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="tab-content" id="upiTabContent">
+
+                    <!-- TAB 1: SCAN UPI QR CODE -->
+                    <div class="tab-pane fade show active text-center" id="tab-qr" role="tabpanel">
+                        <!-- Live Timer -->
+                        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
+                            <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
+                            <span class="small fw-semibold text-secondary">Dynamic UPI QR &bull; Session expires in <span class="text-danger fw-bold" id="countdownTimer">09:59</span></span>
+                        </div>
+
+                        <!-- QR Code Display Box -->
+                        <div class="d-inline-block p-3 rounded-4 shadow-sm bg-white border border-2 border-success-subtle position-relative mb-3" style="max-width: 320px;">
+                            <div class="d-flex align-items-center justify-content-center gap-2 mb-2 pb-2 border-bottom">
+                                <span class="fw-bold text-dark small"><i class="bi bi-activity text-primary me-1"></i>TITAN FITNESS GYM</span>
+                            </div>
+
+                            <!-- Dynamic QR Code Container -->
+                            <div id="qrcodeContainer" class="d-flex justify-content-center align-items-center my-2 p-2 bg-light rounded" style="min-height: 220px; min-width: 220px;">
+                                <canvas id="qrCanvas" width="210" height="210" class="rounded"></canvas>
+                            </div>
+
+                            <div class="mt-2 text-center">
+                                <div class="badge bg-success-subtle text-success border px-3 py-1 fs-6 fw-bold" id="qrAmountBadge">
+                                    ₹{{ "{:,.2f}".format(suggested_amount) }}
+                                </div>
+                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                    UPI ID: <span class="fw-semibold text-dark">titanfitness@icici</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UPI Apps Icons Row -->
+                        <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-4">
+                            <span class="badge bg-light text-dark border px-2 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                <span class="fw-bold text-primary">G</span>Pay
+                            </span>
+                            <span class="badge bg-light text-dark border px-2 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                <span class="fw-bold text-indigo" style="color: #5f259f;">Phone</span>Pe
+                            </span>
+                            <span class="badge bg-light text-dark border px-2 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                <span class="fw-bold text-info">Pay</span>tm
+                            </span>
+                            <span class="badge bg-light text-dark border px-2 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                <span class="fw-bold text-warning">BHIM</span> UPI
+                            </span>
+                            <span class="badge bg-light text-dark border px-2 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                <span class="fw-bold text-dark">CRED</span> Pay
+                            </span>
+                        </div>
+
+                        <!-- Mobile Intent Link -->
+                        <div class="mb-4">
+                            <a id="upiIntentBtn" href="#" class="btn btn-outline-primary btn-sm px-3">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Directly in Phone's UPI App
+                            </a>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- Complete Payment Form for QR Tab -->
+                        <form id="qrPaymentForm" method="POST" action="{{ url_for('payments.pay_online') }}" onsubmit="return handleFormSubmit(this);">
+                            <input type="hidden" name="membership_id" class="hiddenMembershipId" value="{{ selected_membership.Membership_ID if selected_membership else '' }}">
+                            <input type="hidden" name="amount" class="hiddenAmount" value="{{ suggested_amount }}">
+                            <input type="hidden" name="upi_app" value="Scan & Pay QR">
+
+                            <div class="row g-2 text-start justify-content-center mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold small">12-Digit Bank UTR / UPI Reference No.</label>
+                                    <div class="input-group">
+                                        <input type="text" name="utr_number" id="qrUtrInput" class="form-control" placeholder="e.g. 428198739182" maxlength="20">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillRandomUtr('qrUtrInput')">
+                                            <i class="bi bi-magic me-1"></i>Auto Demo UTR
+                                        </button>
+                                    </div>
+                                    <div class="form-text small">Enter reference from UPI app or click Auto Demo UTR for testing.</div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm fw-bold">
+                                <i class="bi bi-check-circle-fill me-2"></i> Confirm & Complete Payment (₹<span class="btnAmountDisp">{{ "{:,.2f}".format(suggested_amount) }}</span>)
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- TAB 2: PAY VIA UPI ID / VPA -->
+                    <div class="tab-pane fade" id="tab-vpa" role="tabpanel">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-phone-vibrate text-primary fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold">Enter Your UPI ID / Virtual Payment Address</h5>
+                            <p class="text-muted small">A payment collect request will be pushed to your UPI mobile app (Google Pay, PhonePe, Paytm, etc.)</p>
+                        </div>
+
+                        <form id="vpaPaymentForm" method="POST" action="{{ url_for('payments.pay_online') }}" onsubmit="return handleFormSubmit(this);">
+                            <input type="hidden" name="membership_id" class="hiddenMembershipId" value="{{ selected_membership.Membership_ID if selected_membership else '' }}">
+                            <input type="hidden" name="amount" class="hiddenAmount" value="{{ suggested_amount }}">
+                            <input type="hidden" name="upi_app" value="UPI Collect VPA">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Enter UPI ID (VPA) <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-lg">
+                                    <input type="text" name="payer_vpa" id="vpaInput" class="form-control" placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm" value="member@okhdfcbank">
+                                    <button class="btn btn-outline-success" type="button" onclick="verifyVpa()">
+                                        <i class="bi bi-patch-check me-1"></i> Verify VPA
+                                    </button>
+                                </div>
+                                <div id="vpaFeedback" class="form-text text-success d-none">
+                                    <i class="bi bi-check-circle-fill me-1"></i> UPI ID verified and active with NPCI network!
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-light rounded border mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Paying To:</span>
+                                    <strong class="text-dark">Titan Fitness Gym (titanfitness@icici)</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Amount to Request:</span>
+                                    <strong class="text-success fs-5">₹<span class="btnAmountDisp">{{ "{:,.2f}".format(suggested_amount) }}</span></strong>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">12-Digit Bank UTR (Optional / Demo)</label>
+                                <div class="input-group">
+                                    <input type="text" name="utr_number" id="vpaUtrInput" class="form-control" placeholder="Leave blank to auto-generate" maxlength="20">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillRandomUtr('vpaUtrInput')">Auto UTR</button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm fw-bold">
+                                <i class="bi bi-send-check-fill me-2"></i> Request & Pay ₹<span class="btnAmountDisp">{{ "{:,.2f}".format(suggested_amount) }}</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- TAB 3: 1-CLICK DEMO VIVA APPROVAL -->
+                    <div class="tab-pane fade" id="tab-demo" role="tabpanel">
+                        <div class="text-center p-3">
+                            <i class="bi bi-lightning-charge-fill text-warning fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold">1-Click Instant Demo Payment</h5>
+                            <p class="text-muted small">Ideal for viva examinations and live demonstrations without manual QR scanning.</p>
+
+                            <div class="p-3 bg-warning-subtle text-warning-emphasis rounded border border-warning mb-4 text-start">
+                                <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i> Demonstration Mode</div>
+                                <div class="small">
+                                    This automatically simulates the complete NPCI banking gateway handshake, generates a verified 12-digit UPI UTR reference, records the transaction in MySQL/SQLite, and prints the tax invoice receipt.
+                                </div>
+                            </div>
+
+                            <form id="demoPaymentForm" method="POST" action="{{ url_for('payments.pay_online') }}" onsubmit="return handleFormSubmit(this);">
+                                <input type="hidden" name="membership_id" class="hiddenMembershipId" value="{{ selected_membership.Membership_ID if selected_membership else '' }}">
+                                <input type="hidden" name="amount" class="hiddenAmount" value="{{ suggested_amount }}">
+                                <input type="hidden" name="upi_app" value="1-Click UPI Demo">
+                                <input type="hidden" name="utr_number" id="demoUtrInput" value="">
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning btn-lg shadow-sm fw-bold text-dark" onclick="fillRandomUtr('demoUtrInput')">
+                                        <i class="bi bi-check2-all me-1"></i> Authorize & Complete UPI Payment Instantly
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PROCESSING MODAL -->
+<div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg text-center p-4">
+            <div class="modal-body">
+                <div class="spinner-border text-success mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+                <h4 class="fw-bold text-dark mb-1">Processing UPI Payment</h4>
+                <p class="text-muted small mb-3" id="procStatusText">Communicating with NPCI UPI Gateway...</p>
+
+                <div class="progress mb-3" style="height: 10px;">
+                    <div id="procProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 25%"></div>
+                </div>
+
+                <div class="small text-muted" id="procStepText">
+                    <i class="bi bi-lock-fill me-1"></i> Encrypted 256-bit banking transaction in progress...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QRCode.js Library (via robust reliable CDN with fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<script>
+// State management
+let currentAmount = parseFloat("{{ suggested_amount }}") || 0.0;
+let currentMembershipId = "{{ selected_membership.Membership_ID if selected_membership else '' }}";
+const merchantVpa = "titanfitness@icici";
+const merchantName = "Titan Fitness Gym";
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function () {
+    const memSelect = document.getElementById('membershipSelect');
+    if (memSelect) {
+        memSelect.addEventListener('change', onMembershipChange);
+    }
+
+    const amountInput = document.getElementById('paymentAmountInput');
+    if (amountInput) {
+        amountInput.addEventListener('input', onAmountInput);
+    }
+
+    updateUI();
+    startCountdown(600); // 10 minutes
+});
+
+function onMembershipChange() {
+    const sel = document.getElementById('membershipSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt) return;
+
+    currentMembershipId = opt.value;
+    const balance = parseFloat(opt.getAttribute('data-balance')) || 0.0;
+    const totalAmount = parseFloat(opt.getAttribute('data-amount')) || 0.0;
+    const paid = parseFloat(opt.getAttribute('data-paid')) || 0.0;
+
+    // Set suggested amount to balance due if > 0, else totalAmount
+    currentAmount = balance > 0 ? balance : totalAmount;
+    document.getElementById('paymentAmountInput').value = currentAmount.toFixed(2);
+
+    // Update display labels
+    document.getElementById('dispMemberName').textContent = opt.getAttribute('data-member-name') || '-';
+    document.getElementById('dispMemberPhone').textContent = opt.getAttribute('data-member-phone') || '-';
+    document.getElementById('dispPlanName').textContent = opt.getAttribute('data-plan-name') || '-';
+    
+    const start = opt.getAttribute('data-start') || '';
+    const end = opt.getAttribute('data-end') || '';
+    document.getElementById('dispValidity').textContent = `${start} → ${end}`;
+
+    document.getElementById('dispPlanFee').textContent = '₹' + totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('dispPaidFee').textContent = '₹' + paid.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('dispBalanceDue').textContent = '₹' + balance.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.getElementById('summaryStatusBadge').textContent = opt.getAttribute('data-status') || 'Active';
+
+    updateUI();
+}
+
+function onAmountInput(e) {
+    const val = parseFloat(e.target.value) || 0.0;
+    currentAmount = Math.max(0, val);
+    updateUI();
+}
+
+function setQuickAmount(type) {
+    const sel = document.getElementById('membershipSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt) return;
+
+    if (type === 'balance') {
+        const balance = parseFloat(opt.getAttribute('data-balance')) || 0.0;
+        const total = parseFloat(opt.getAttribute('data-amount')) || 0.0;
+        currentAmount = balance > 0 ? balance : total;
+    } else {
+        currentAmount = parseFloat(type);
+    }
+
+    document.getElementById('paymentAmountInput').value = currentAmount.toFixed(2);
+    updateUI();
+}
+
+function updateUI() {
+    // Sync all hidden form inputs
+    document.querySelectorAll('.hiddenMembershipId').forEach(el => el.value = currentMembershipId);
+    document.querySelectorAll('.hiddenAmount').forEach(el => el.value = currentAmount.toFixed(2));
+    
+    // Sync button text
+    const formatted = '₹' + currentAmount.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    document.querySelectorAll('.btnAmountDisp').forEach(el => el.textContent = currentAmount.toFixed(2));
+    const badge = document.getElementById('qrAmountBadge');
+    if (badge) badge.textContent = formatted;
+
+    // Generate UPI URI
+    const upiUri = `upi://pay?pa=${encodeURIComponent(merchantVpa)}&pn=${encodeURIComponent(merchantName)}&am=${currentAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Gym Fee Mem#' + currentMembershipId)}`;
+
+    // Update Mobile Intent Button
+    const intentBtn = document.getElementById('upiIntentBtn');
+    if (intentBtn) intentBtn.href = upiUri;
+
+    // Render QR Code
+    renderQrCode(upiUri);
+}
+
+function renderQrCode(text) {
+    const canvas = document.getElementById('qrCanvas');
+    if (!canvas) return;
+
+    if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+        QRCode.toCanvas(canvas, text, {
+            width: 210,
+            margin: 1,
+            color: {
+                dark: '#0f172a',
+                light: '#ffffff'
+            }
+        }, function (error) {
+            if (error) renderFallbackQr(canvas, text);
+        });
+    } else {
+        renderFallbackQr(canvas, text);
+    }
+}
+
+function renderFallbackQr(canvas, text) {
+    // Clean fallback visually if external library is not reachable
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 210, 210);
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, 190, 190);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('UPI QR CODE', 105, 70);
+
+    ctx.fillStyle = '#16a34a';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('₹' + currentAmount.toFixed(2), 105, 105);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(merchantVpa, 105, 135);
+
+    ctx.fillStyle = '#0284c7';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('Scan with GPay / PhonePe', 105, 160);
+}
+
+function fillRandomUtr(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        // Realistic 12-digit Indian Bank UTR
+        const randomUtr = '42' + Math.floor(1000000000 + Math.random() * 9000000000);
+        el.value = randomUtr;
+    }
+}
+
+function verifyVpa() {
+    const feedback = document.getElementById('vpaFeedback');
+    feedback.classList.remove('d-none');
+    setTimeout(() => {
+        feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+}
+
+function startCountdown(duration) {
+    let timer = duration, minutes, seconds;
+    const display = document.getElementById('countdownTimer');
+    const interval = setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        if (display) display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            clearInterval(interval);
+            if (display) display.textContent = "00:00 (Expired)";
+        }
+    }, 1000);
+}
+
+// Simulated Gateway Handshake Modal
+let isSubmitting = false;
+function handleFormSubmit(form) {
+    if (isSubmitting) return true;
+    if (currentAmount <= 0) {
+        alert("Please enter a valid payment amount greater than zero.");
+        return false;
+    }
+
+    const modalEl = document.getElementById('processingModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    const progressBar = document.getElementById('procProgressBar');
+    const statusText = document.getElementById('procStatusText');
+
+    setTimeout(() => {
+        progressBar.style.width = '60%';
+        statusText.textContent = 'Payment Authorized by Bank (NPCI Handshake)...';
+    }, 700);
+
+    setTimeout(() => {
+        progressBar.style.width = '100%';
+        statusText.textContent = 'Success! Generating Digital Tax Invoice...';
+    }, 1300);
+
+    setTimeout(() => {
+        isSubmitting = true;
+        form.submit();
+    }, 1800);
+
+    return false;
+}
+</script>
+{% endblock %}

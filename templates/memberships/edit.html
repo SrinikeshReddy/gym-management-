@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Membership #{{ membership.Membership_ID }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-pencil-square text-success me-2"></i>Edit Membership Subscription</h2>
+        <span class="text-muted small">Update plan details for Membership #{{ membership.Membership_ID }}</span>
+    </div>
+    <a href="{{ url_for('memberships.show', id=membership.Membership_ID) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-success">Edit Membership #{{ membership.Membership_ID }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('memberships.edit', id=membership.Membership_ID) }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Member <span class="text-danger">*</span></label>
+                            <select name="member_id" class="form-select" required>
+                                {% for m in members %}
+                                <option value="{{ m.Member_ID }}" {% if membership.Member_ID == m.Member_ID %}selected{% endif %}>
+                                    #{{ m.Member_ID }} - {{ m.Name }} (Phone: {{ m.Phone }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Plan Name <span class="text-danger">*</span></label>
+                            <select name="plan_name" id="plan_name" class="form-select" required>
+                                <option value="Monthly" {% if membership.Plan_Name == 'Monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="Quarterly" {% if membership.Plan_Name == 'Quarterly' %}selected{% endif %}>Quarterly</option>
+                                <option value="Half-Yearly" {% if membership.Plan_Name == 'Half-Yearly' %}selected{% endif %}>Half-Yearly</option>
+                                <option value="Yearly" {% if membership.Plan_Name == 'Yearly' %}selected{% endif %}>Yearly</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="Active" {% if membership.Status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Expired" {% if membership.Status == 'Expired' %}selected{% endif %}>Expired</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ membership.Start_Date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ membership.End_Date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Duration (Days)</label>
+                            <input type="text" id="duration_days" class="form-control bg-light" value="{{ membership.Duration_Days }}" readonly>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Amount (₹) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="amount" class="form-control" value="{{ membership.Amount }}" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Plan Description</label>
+                            <textarea name="plan_description" class="form-control" rows="3">{{ membership.Plan_Description or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('memberships.show', id=membership.Membership_ID) }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-check-circle me-1"></i> Update Membership
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

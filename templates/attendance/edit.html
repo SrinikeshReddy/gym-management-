@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Attendance #{{ attendance.Attendance_ID }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-pencil-square text-warning me-2"></i>Edit Attendance Record</h2>
+        <span class="text-muted small">Update attendance record #{{ attendance.Attendance_ID }}</span>
+    </div>
+    <a href="{{ url_for('attendance.show', id=attendance.Attendance_ID) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark">Edit Log #{{ attendance.Attendance_ID }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('attendance.edit', id=attendance.Attendance_ID) }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Member <span class="text-danger">*</span></label>
+                            <select name="member_id" class="form-select" required>
+                                {% for m in members %}
+                                <option value="{{ m.Member_ID }}" {% if attendance.Member_ID == m.Member_ID %}selected{% endif %}>
+                                    #{{ m.Member_ID }} - {{ m.Name }} (Phone: {{ m.Phone }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Workout Routine <span class="text-danger">*</span></label>
+                            <select name="workout_id" class="form-select" required>
+                                {% for w in workouts %}
+                                <option value="{{ w.Workout_ID }}" {% if attendance.Workout_ID == w.Workout_ID %}selected{% endif %}>
+                                    {{ w.Workout_Name }} ({{ w.Difficulty_Level }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="date" class="form-control" value="{{ attendance.Date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-In Time <span class="text-danger">*</span></label>
+                            <input type="time" name="check_in_time" id="check_in_time" class="form-control" value="{{ attendance.Check_In_Time.strftime('%H:%M') }}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Check-Out Time</label>
+                            <input type="time" name="check_out_time" id="check_out_time" class="form-control" value="{{ attendance.Check_Out_Time.strftime('%H:%M') if attendance.Check_Out_Time else '' }}">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Duration (Minutes)</label>
+                            <input type="text" id="workout_duration" class="form-control bg-light" value="{{ attendance.Workout_Duration }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('attendance.show', id=attendance.Attendance_ID) }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-warning text-dark fw-semibold px-4">
+                            <i class="bi bi-check-circle me-1"></i> Update Attendance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

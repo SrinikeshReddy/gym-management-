@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ workout.Workout_Name }} - Workout Details{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>
+            <i class="bi bi-heart-pulse text-danger me-2"></i>{{ workout.Workout_Name }}
+            <span class="badge {% if workout.Difficulty_Level == 'Easy' %}bg-success{% elif workout.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 ms-2">
+                {{ workout.Difficulty_Level }}
+            </span>
+        </h2>
+        <span class="text-muted small">Workout ID: #{{ workout.Workout_ID }} &bull; Duration: {{ workout.Duration_Minutes }} mins</span>
+    </div>
+    <div>
+        <a href="{{ url_for('workouts.edit', id=workout.Workout_ID) }}" class="btn btn-outline-secondary me-1">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <form method="POST" action="{{ url_for('workouts.delete', id=workout.Workout_ID) }}" class="d-inline" onsubmit="return confirmDelete('workout routine');">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Workout Information & Trainer Details -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 fw-bold">
+                <i class="bi bi-info-circle text-primary me-2"></i>Workout Details
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Workout ID</span>
+                        <span class="fw-semibold">#{{ workout.Workout_ID }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Difficulty</span>
+                        <span class="badge {% if workout.Difficulty_Level == 'Easy' %}bg-success{% elif workout.Difficulty_Level == 'Medium' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ workout.Difficulty_Level }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Duration</span>
+                        <span class="fw-semibold">{{ workout.Duration_Minutes }} Minutes</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Calories Burn</span>
+                        <span class="fw-semibold text-danger">{{ workout.Calories_Burn }} kcal</span>
+                    </li>
+                    <li class="list-group-item">
+                        <span class="text-muted d-block mb-1">Assigned Trainer</span>
+                        {% if workout.trainer %}
+                        <a href="{{ url_for('trainers.show', id=workout.trainer.Trainer_ID) }}" class="fw-bold text-decoration-none">
+                            <i class="bi bi-person-badge me-1"></i>{{ workout.trainer.Name }}
+                        </a>
+                        <div class="small text-muted">{{ workout.trainer.Specialization }}</div>
+                        {% else %}
+                        <span class="text-muted fst-italic">No trainer assigned</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <span class="text-muted d-block mb-1">Description</span>
+                        <p class="small mb-0 text-secondary">{{ workout.Description or 'No description provided.' }}</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Participating Members & Attendance Logs -->
+    <div class="col-lg-8">
+        <!-- 1. Enrolled Members -->
+        <div class="card table-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">
+                    <i class="bi bi-people text-primary me-2"></i>Enrolled Members
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#enrollMemberModal">
+                    <i class="bi bi-plus-lg me-1"></i> Enroll Member
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Member Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in workout.participations %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('members.show', id=p.member.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ p.member.Name }}
+                                    </a>
+                                </td>
+                                <td>{{ p.member.Phone }}</td>
+                                <td class="small text-muted">{{ p.member.Email }}</td>
+                                <td>
+                                    <span class="badge {% if p.member.Status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ p.member.Status }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <form method="POST" action="{{ url_for('workouts.remove_member', workout_id=workout.Workout_ID, member_id=p.member.Member_ID) }}" onsubmit="return confirm('Remove member from workout?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Unenroll Member">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No members enrolled in this workout yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Recent Attendance Logs for this Workout -->
+        <div class="card table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-calendar-check text-warning me-2"></i>Workout Attendance History</span>
+                <span class="badge bg-secondary">{{ workout.attendances|length }} check-ins</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Member</th>
+                                <th>Check-In</th>
+                                <th>Check-Out</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in workout.attendances %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('attendance.show', id=a.Attendance_ID) }}" class="fw-semibold text-decoration-none">
+                                        {{ a.Date.strftime('%Y-%m-%d') }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('members.show', id=a.member.Member_ID) }}" class="text-decoration-none">
+                                        {{ a.member.Name }}
+                                    </a>
+                                </td>
+                                <td>{{ a.Check_In_Time.strftime('%H:%M') }}</td>
+                                <td>{{ a.Check_Out_Time.strftime('%H:%M') if a.Check_Out_Time else '-' }}</td>
+                                <td>{{ a.Workout_Duration }} mins</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No attendance records for this workout.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Enroll Member into Workout -->
+<div class="modal fade" id="enrollMemberModal" tabindex="-1" aria-labelledby="enrollMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('workouts.assign') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="enrollMemberModalLabel">Enroll Member in {{ workout.Workout_Name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="workout_id" value="{{ workout.Workout_ID }}">
+                    <label class="form-label fw-semibold">Select Member:</label>
+                    <select name="member_id" class="form-select" required>
+                        <option value="">-- Choose Member --</option>
+                        {% for m in all_members %}
+                            {% if m.Member_ID not in enrolled_member_ids %}
+                            <option value="{{ m.Member_ID }}">{{ m.Name }} ({{ m.Phone }})</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Enroll</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

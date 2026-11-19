@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment {{ payment.Invoice_Number }} - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>
+            <i class="bi bi-receipt text-info me-2"></i>Payment Receipt #{{ payment.Invoice_Number }}
+            <span class="badge {% if payment.Status == 'Success' %}bg-success{% elif payment.Status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 ms-2">
+                {{ payment.Status }}
+            </span>
+        </h2>
+        <span class="text-muted small">Transaction Date: {{ payment.Payment_Date.strftime('%d %B %Y') }}</span>
+    </div>
+    <div>
+        <a href="{{ url_for('payments.invoice', id=payment.Payment_ID) }}" class="btn btn-outline-primary me-1">
+            <i class="bi bi-printer me-1"></i> Printable Invoice
+        </a>
+        <a href="{{ url_for('payments.edit', id=payment.Payment_ID) }}" class="btn btn-outline-secondary me-1">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <form method="POST" action="{{ url_for('payments.delete', id=payment.Payment_ID) }}" class="d-inline" onsubmit="return confirmDelete('payment record');">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 fw-bold">
+                <i class="bi bi-cash-stack text-success me-2"></i>Transaction Summary
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Payment ID</span>
+                        <span class="fw-semibold">#{{ payment.Payment_ID }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Invoice Number</span>
+                        <span class="fw-bold text-primary">{{ payment.Invoice_Number }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Receipt / Reference ID</span>
+                        <span class="font-monospace small">{{ payment.Transaction_ID or 'N/A' }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Payment Method</span>
+                        <span class="badge bg-light text-dark border">{{ payment.Payment_Method }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Payment Date</span>
+                        <span class="fw-semibold">{{ payment.Payment_Date.strftime('%Y-%m-%d') }}</span>
+                    </li>
+                    {% if payment.Due_Date %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Due Date</span>
+                        <span class="fw-semibold text-danger">{{ payment.Due_Date.strftime('%Y-%m-%d') }}</span>
+                    </li>
+                    {% endif %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Linked Membership</span>
+                        {% if payment.membership %}
+                        <a href="{{ url_for('memberships.show', id=payment.membership.Membership_ID) }}" class="fw-bold text-decoration-none">
+                            #{{ payment.membership.Membership_ID }} - {{ payment.membership.Plan_Name }} (Member: {{ payment.membership.member.Name }})
+                        </a>
+                        {% else %}
+                        <span class="text-muted fst-italic">Independent fee</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Assigned Trainer</span>
+                        {% if payment.trainer %}
+                        <a href="{{ url_for('trainers.show', id=payment.trainer.Trainer_ID) }}" class="fw-semibold text-decoration-none">
+                            {{ payment.trainer.Name }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted fst-italic">None</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between bg-light py-3">
+                        <span class="fs-5 fw-bold">Total Amount Paid</span>
+                        <span class="fs-4 fw-bold text-success">₹{{ "{:,.2f}".format(payment.Amount) }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer bg-white text-end py-3">
+                <a href="{{ url_for('payments.invoice', id=payment.Payment_ID) }}" class="btn btn-primary">
+                    <i class="bi bi-printer me-1"></i> View & Print Official Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Workout - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-plus-circle-fill text-danger me-2"></i>Create Workout Routine</h2>
+        <span class="text-muted small">Define a fitness routine and assign an instructor</span>
+    </div>
+    <a href="{{ url_for('workouts.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Workouts
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-danger">Workout Definition Form</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('workouts.add') }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Workout Routine Name <span class="text-danger">*</span></label>
+                            <input type="text" name="workout_name" class="form-control" placeholder="e.g. Chest & Triceps Blast" value="{{ form_data.workout_name if form_data else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Difficulty Level <span class="text-danger">*</span></label>
+                            <select name="difficulty_level" class="form-select" required>
+                                <option value="Easy" {% if form_data and form_data.difficulty_level == 'Easy' %}selected{% endif %}>Easy</option>
+                                <option value="Medium" {% if (form_data and form_data.difficulty_level == 'Medium') or not form_data %}selected{% endif %}>Medium</option>
+                                <option value="Hard" {% if form_data and form_data.difficulty_level == 'Hard' %}selected{% endif %}>Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Estimated Calories Burn (kcal)</label>
+                            <input type="number" name="calories_burn" class="form-control" min="0" value="{{ form_data.calories_burn if form_data else '350' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input type="number" name="duration_minutes" class="form-control" min="5" max="300" value="{{ form_data.duration_minutes if form_data else '45' }}" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Assigned Trainer <span class="text-danger">*</span></label>
+                            <select name="trainer_id" class="form-select">
+                                <option value="">-- Select Trainer --</option>
+                                {% for t in trainers %}
+                                <option value="{{ t.Trainer_ID }}" {% if form_data and form_data.trainer_id == t.Trainer_ID|string %}selected{% endif %}>{{ t.Name }} ({{ t.Specialization }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select instructor responsible for conducting this routine.</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Routine Description & Exercises</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Describe exercises, target muscle groups, and sets...">{{ form_data.description if form_data else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{{ url_for('workouts.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-check-circle me-1"></i> Save Workout
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

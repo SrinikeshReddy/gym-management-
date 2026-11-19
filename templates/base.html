@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gym Management System{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js (for simple dashboard charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="{% if is_user %}{{ url_for('auth.portal') }}{% elif is_admin %}{{ url_for('dashboard.index') }}{% else %}{{ url_for('auth.login') }}{% endif %}">
+                <i class="bi bi-activity text-primary me-2 fs-4"></i>
+                <span>GYM MANAGEMENT SYSTEM</span>
+            </a>
+            
+            <div class="d-flex align-items-center text-white">
+                {% if is_logged_in %}
+                    {% if is_admin %}
+                    <span class="badge bg-primary px-3 py-2 me-2">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Admin
+                    </span>
+                    {% else %}
+                    <span class="badge bg-info text-dark px-3 py-2 me-2">
+                        <i class="bi bi-person-fill me-1"></i> {{ current_user_name }}
+                    </span>
+                    {% endif %}
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger ms-1">
+                        <i class="bi bi-box-arrow-right me-1"></i> Log Out
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary ms-1">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="app-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <ul class="nav flex-column py-3">
+                {% if is_user %}
+                <!-- MEMBER / USER NAVIGATION -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'auth.portal' %}active{% endif %}" href="{{ url_for('auth.portal') }}">
+                        <i class="bi bi-person-circle"></i> My Portal
+                    </a>
+                </li>
+                <li class="nav-item mt-3 pt-2 border-top border-secondary">
+                    <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+                        <i class="bi bi-box-arrow-right"></i> Log Out
+                    </a>
+                </li>
+                {% else %}
+                <!-- ADMINISTRATOR NAVIGATION -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'members.' in request.endpoint %}active{% endif %}" href="{{ url_for('members.index') }}">
+                        <i class="bi bi-people-fill"></i> Members
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'trainers.' in request.endpoint %}active{% endif %}" href="{{ url_for('trainers.index') }}">
+                        <i class="bi bi-person-badge-fill"></i> Trainers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'workouts.' in request.endpoint %}active{% endif %}" href="{{ url_for('workouts.index') }}">
+                        <i class="bi bi-heart-pulse-fill"></i> Workouts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'memberships.' in request.endpoint %}active{% endif %}" href="{{ url_for('memberships.index') }}">
+                        <i class="bi bi-card-checklist"></i> Memberships
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and ('payments.' in request.endpoint) %}active{% endif %}" href="{{ url_for('payments.index') }}">
+                        <i class="bi bi-cash-stack"></i> Payments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'attendance.' in request.endpoint %}active{% endif %}" href="{{ url_for('attendance.index') }}">
+                        <i class="bi bi-calendar-check-fill"></i> Attendance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'reports.' in request.endpoint %}active{% endif %}" href="{{ url_for('reports.index') }}">
+                        <i class="bi bi-file-earmark-bar-graph-fill"></i> Reports
+                    </a>
+                </li>
+                <li class="nav-item mt-3 pt-2 border-top border-secondary">
+                    <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+                        <i class="bi bi-box-arrow-right"></i> Log Out
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- Flash Message Alerts -->
+            <div class="container-fluid px-0">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {% if category == 'success' %}
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                {% elif category == 'danger' %}
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                {% endif %}
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}
+                    {% if error_title %}
+                        <div class="card text-center my-5 p-5 shadow-sm">
+                            <h2 class="text-danger">{{ error_title }}</h2>
+                            <p class="text-muted">{{ error_message }}</p>
+                            <div>
+                                <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Return to Dashboard</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endblock %}
+            </div>
+
+            <footer class="mt-5 pt-3 border-top text-center text-muted small">
+                <p class="mb-0">Gym Management System &copy; {{ current_year }} &mdash; All Rights Reserved</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Application JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

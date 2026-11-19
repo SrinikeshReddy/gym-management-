@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Memberships - Gym Management System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-card-checklist text-success me-2"></i>Membership Management</h2>
+        <span class="text-muted small">Manage member subscription plans, validity periods, and statuses</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('payments.add') }}" class="btn btn-outline-success">
+            <i class="bi bi-cash me-1"></i> Record Payment
+        </a>
+        <a href="{{ url_for('memberships.add') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle-fill me-1"></i> New Membership
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('memberships.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by Member Name or Phone..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="plan" class="form-select">
+                    <option value="">All Plans</option>
+                    <option value="Monthly" {% if plan_filter == 'Monthly' %}selected{% endif %}>Monthly</option>
+                    <option value="Quarterly" {% if plan_filter == 'Quarterly' %}selected{% endif %}>Quarterly</option>
+                    <option value="Half-Yearly" {% if plan_filter == 'Half-Yearly' %}selected{% endif %}>Half-Yearly</option>
+                    <option value="Yearly" {% if plan_filter == 'Yearly' %}selected{% endif %}>Yearly</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Expired" {% if status_filter == 'Expired' %}selected{% endif %}>Expired</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-dark w-100">Filter</button>
+            </div>
+            {% if search_query or plan_filter or status_filter %}
+            <div class="col-12 mt-2">
+                <a href="{{ url_for('memberships.index') }}" class="text-muted small text-decoration-none">
+                    <i class="bi bi-x-circle me-1"></i> Clear filters
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Memberships Table -->
+<div class="card table-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Membership Records ({{ memberships|length }} records)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Member Name</th>
+                        <th>Plan Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Duration</th>
+                        <th>Fee Amount</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ms in memberships %}
+                    <tr>
+                        <td class="fw-bold">#{{ ms.Membership_ID }}</td>
+                        <td>
+                            <a href="{{ url_for('members.show', id=ms.member.Member_ID) }}" class="fw-semibold text-decoration-none">
+                                {{ ms.member.Name }}
+                            </a>
+                            <div class="small text-muted">{{ ms.member.Phone }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border fw-semibold">
+                                {{ ms.Plan_Name }}
+                            </span>
+                        </td>
+                        <td>{{ ms.Start_Date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ ms.End_Date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ ms.Duration_Days }} days</td>
+                        <td>
+                            <div class="fw-bold">₹{{ "{:,.2f}".format(ms.Amount) }}</div>
+                            {% if ms.is_fully_paid %}
+                            <span class="badge bg-success-subtle text-success border" style="font-size: 0.7rem;">
+                                <i class="bi bi-check-circle me-1"></i>Fully Paid
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger-subtle text-danger border" style="font-size: 0.7rem;">
+                                Due: ₹{{ "{:,.2f}".format(ms.balance_due) }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if ms.Status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ ms.Status }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('payments.add', membership_id=ms.Membership_ID) }}" class="btn btn-outline-success" title="Record Offline Payment">
+                                    <i class="bi bi-cash"></i>
+                                </a>
+                                <a href="{{ url_for('memberships.show', id=ms.Membership_ID) }}" class="btn btn-outline-primary" title="View Membership">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('memberships.edit', id=ms.Membership_ID) }}" class="btn btn-outline-secondary" title="Edit Membership">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('memberships.delete', id=ms.Membership_ID) }}" class="d-inline" onsubmit="return confirmDelete('membership record');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete Membership">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No memberships found matching your search.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
